@@ -3,48 +3,63 @@
  * https://github.com/facebook/react-native
  *
  * @format
- * @flow
  * @lint-ignore-every XPLATJSCOPYRIGHT1
  */
 
-import React, {Component} from 'react';
-import {Platform, StyleSheet, Text, View} from 'react-native';
+import * as React from "react"
+import { createStackNavigator } from "react-navigation"
+import { Home, Hina } from "./components"
+import {
+  createReduxContainer,
+  createReactNavigationReduxMiddleware,
+  createNavigationReducer
+} from "react-navigation-redux-helpers"
+import { Provider, connect } from "react-redux"
+import { combineReducers, createStore, applyMiddleware } from "redux"
+import loggerMiddleware from "redux-logger"
 
-const instructions = Platform.select({
-  ios: 'Press Cmd+R to reload,\n' + 'Cmd+D or shake for dev menu',
-  android:
-    'Double tap R on your keyboard to reload,\n' +
-    'Shake or press menu button for dev menu',
-});
-
-type Props = {};
-export default class App extends Component<Props> {
-  render() {
-    return (
-      <View style={styles.container}>
-        <Text style={styles.welcome}>Welcome to React Native!</Text>
-        <Text style={styles.instructions}>To get started, edit App.js</Text>
-        <Text style={styles.instructions}>{instructions}</Text>
-      </View>
-    );
+// router config
+const appRouterConfig = {
+  Home: {
+    screen: Home
+  },
+  Hina: {
+    screen: Hina
   }
 }
+const AppNavigator = createStackNavigator(appRouterConfig)
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#F5FCFF',
-  },
-  welcome: {
-    fontSize: 20,
-    textAlign: 'center',
-    margin: 10,
-  },
-  instructions: {
-    textAlign: 'center',
-    color: '#333333',
-    marginBottom: 5,
-  },
-});
+// react navigation redux helper
+const navReducer = createNavigationReducer(AppNavigator)
+const appReducer = combineReducers({
+  nav: navReducer
+})
+
+// container
+const middleware = createReactNavigationReduxMiddleware(state => state.nav)
+
+// createReduxContainerの前に呼ばないといけない
+const App = createReduxContainer(AppNavigator)
+const mapStateToProps = state => ({
+  state: state.nav
+})
+const AppWithNavigationState = connect(
+  mapStateToProps,
+  dispatch => {
+    return { dispatch }
+  }
+)(App)
+
+// store
+const store = createStore(appReducer, applyMiddleware(middleware, loggerMiddleware))
+
+// root component
+export default class Root extends React.Component {
+  render() {
+    return (
+      <Provider store={store}>
+        <AppWithNavigationState />
+      </Provider>
+    )
+  }
+}
