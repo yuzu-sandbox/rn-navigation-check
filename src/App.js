@@ -36,9 +36,9 @@ const appReducer = combineReducers({
 })
 
 // container
+// createReduxContainerの前に呼ばないといけない
 const middleware = createReactNavigationReduxMiddleware(state => state.nav)
 
-// createReduxContainerの前に呼ばないといけない
 const App = createReduxContainer(AppNavigator)
 const mapStateToProps = state => ({
   state: state.nav
